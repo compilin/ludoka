@@ -1,0 +1,9 @@
+ludoka {
+  db {
+    driver = "org.h2.Driver",
+    url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
+    user = "root"
+    password = ""
+  }
+  reverse_proxy = false // Enables parsing of Forwarding-related headers
+}

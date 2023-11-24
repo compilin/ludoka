@@ -1,0 +1,269 @@
+openapi: "3.0.3"
+info:
+  title: "backend API"
+  description: "backend API"
+  version: "0.1.0"
+servers:
+  - url: "https://backend"
+paths:
+  /auth:
+    summary: "Manages user authentication and passwords"
+    get:
+      operationId: getAuth
+      summary: "Get auth status"
+      responses:
+        "200":
+          description: "An AuthStatus with a user attribute set to the currently logged in user, or null if there is none"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+    post:
+      operationId: login
+      summary: "Login"
+      description: "Status code indicates the result of the operation while the subsequent auth status is returned in all cases"
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: "object"
+              properties:
+                username:
+                  type: "string"
+                  required: true
+                password:
+                  type: "string"
+                  format: "password"
+                  required: true
+      responses:
+        "200":
+          description: "Successfully logged in"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+        "401":
+          description: "Successfully logged in"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+        "304":
+          description: "User was already logged in"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+        "400":
+          description: "Already logged in as a different user"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+    delete:
+      operationId: logout
+      summary: "Logout"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+  /auth/password:
+    post:
+      operationId: setPassword
+      summary: "Set password"
+      description: "Change own password"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/PasswordFormData"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+  /auth/password/{id}:
+    post:
+      operationId: setUserPassword
+      summary: "Change given user's password"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/PasswordFormData"
+        required: true
+      responses:
+        "400":
+          description: "Invalid password"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+        "200":
+          description: "Password changed succesfully"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+        "404":
+          description: "User not Found"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+    delete:
+      operationId: unsetUserPassword
+      summary: "Delete a user's password"
+      description: "Disable login for this user"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "Password changed succesfully"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+        "404":
+          description: "User not Found"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+  /users:
+    get:
+      operationId: getUserList
+      summary: "Get all users"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      summary: "Create user"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/User"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                type: "integer"
+                format: "int32"
+        "409":
+          description: "User already exists with this name"
+  /users/{id}:
+    get:
+      operationId: getUser
+      summary: "Get user"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: "Not Found"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+    patch:
+      operationId: updateUser
+      summary: "Update user data"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/User"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+    delete:
+      operationId: deleteUser
+      summary: "Delete user"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "object"
+components:
+  schemas:
+    User:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int32"
+          required: true
+        name:
+          type: "string"
+          required: true
+    AuthStatus:
+      description: "An optional User object to indicate authentication status"
+      type: "object"
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+    PasswordFormData:
+      type: "object"
+      properties:
+        password:
+          type: "string"
