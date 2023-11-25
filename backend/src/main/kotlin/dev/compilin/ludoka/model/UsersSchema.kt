@@ -6,32 +6,25 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
-/**
- * Describes a user identified by an ID
- */
 @Serializable
-data class User(val id: Int = -1, val name: String) {
-    constructor(it: ResultRow) : this(
-        it[UserService.Users.id].value,
-        it[UserService.Users.name]
-    )
-
-    constructor(id: Int, data: UserData) : this(id, data.name)
-}
-
-/**
- * Describe a user's data, without an associated ID, since most API calls receiving user data get the ID separately
- */
-@Serializable
-data class UserData(val name: String)
+class User(val id: Int = -1, val name: String)
 
 class UserService(database: Database, log: Logger) {
     object Users : IntIdTable() {
         val name = varchar("name", length = 50).uniqueIndex()
         val password = binary("password").nullable()
+
+        fun read(row: ResultRow) = User(
+            row[id].value,
+            row[name])
+
+        fun <T> write(user: User): Users.(UpdateBuilder<T>) -> Unit = {
+            it[name] = user.name
+        }
     }
 
     init {
@@ -43,9 +36,9 @@ class UserService(database: Database, log: Logger) {
     suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
-    suspend fun create(user: UserData, passHash: ByteArray?): Int = dbQuery {
+    suspend fun create(user: User, passHash: ByteArray?): Int = dbQuery {
         Users.insert {
-            it[name] = user.name
+            write<Number>(user)(it)
             it[password] = passHash
         }[Users.id].value
     }
@@ -53,7 +46,7 @@ class UserService(database: Database, log: Logger) {
     suspend fun read(id: Int): User? {
         return dbQuery {
             Users.select { Users.id eq id }
-                .map { User(it) }
+                .map(Users::read)
                 .singleOrNull()
         }
     }
@@ -61,28 +54,31 @@ class UserService(database: Database, log: Logger) {
     suspend fun read(ids: List<Int>): List<User> {
         return dbQuery {
             Users.select { Users.id inList ids }
-                .map { User(it) }
+                .map(Users::read)
         }
     }
 
     suspend fun readAll(): List<User> {
         return dbQuery {
-            Users.selectAll().map { User(it) }
+            Users.selectAll().map(Users::read)
         }
     }
 
+    /**
+     * Finds a user by name and returns the associated object and password hash
+     * @param name of the user to search for
+     * @return null if the name is not found, otherwise a pair of the user and password
+     */
     suspend fun readPassword(name: String): Pair<User, ByteArray?>? {
         return dbQuery {
             Users.select { Users.name eq name }
-                .map { User(it) to it[Users.password] }
+                .map { Users.read(it) to it[Users.password] }
                 .singleOrNull()
         }
     }
 
-    suspend fun update(id: Int, user: UserData): Boolean = dbQuery {
-        Users.update({ Users.id eq id }) {
-            it[name] = user.name
-        } > 0
+    suspend fun update(id: Int, user: User): Boolean = dbQuery {
+        Users.update({ Users.id eq id }, null, Users.write(user)) > 0
     }
 
     suspend fun updatePassword(id: Int, passHash: ByteArray?) = dbQuery {

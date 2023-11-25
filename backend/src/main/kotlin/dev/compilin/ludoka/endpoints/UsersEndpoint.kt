@@ -3,7 +3,7 @@ package dev.compilin.ludoka.endpoints
 import dev.compilin.ludoka.AUTH_ADMIN
 import dev.compilin.ludoka.AUTH_SESSION
 import dev.compilin.ludoka.AppDatabase
-import dev.compilin.ludoka.model.UserData
+import dev.compilin.ludoka.model.User
 import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
@@ -25,7 +25,7 @@ fun Routing.configureUserEndpoint(db: AppDatabase) {
     authenticate(AUTH_ADMIN) {
         // Create user
         post<Users> {
-            val user = call.receive<UserData>()
+            val user = call.receive<User>()
             if (db.users.existsByName(user.name)) {
                 call.respond(HttpStatusCode.Conflict, "User already exists with this name")
             } else {
@@ -36,7 +36,7 @@ fun Routing.configureUserEndpoint(db: AppDatabase) {
 
         // Update user
         patch<Users.Id> {
-            val user = call.receive<UserData>()
+            val user = call.receive<User>()
             db.users.update(it.id, user)
             call.respond(HttpStatusCode.OK)
         }
