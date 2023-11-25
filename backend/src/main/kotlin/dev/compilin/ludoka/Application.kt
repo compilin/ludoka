@@ -1,7 +1,8 @@
 package dev.compilin.ludoka
 
 import dev.compilin.ludoka.endpoints.configureAuthEndpoint
-import dev.compilin.ludoka.endpoints.configureUserEndpoint
+import dev.compilin.ludoka.endpoints.configureGamesEndpoint
+import dev.compilin.ludoka.endpoints.configureUsersEndpoint
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.autohead.*
@@ -46,7 +47,8 @@ fun Application.module() {
 
     routing {
         configureAuthEndpoint(db)
-        configureUserEndpoint(db)
+        configureUsersEndpoint(db)
+        configureGamesEndpoint(db)
 
         openAPI(path = "openapi")
     }

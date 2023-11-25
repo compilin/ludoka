@@ -1,5 +1,6 @@
 package dev.compilin.ludoka
 
+import dev.compilin.ludoka.model.GameService
 import dev.compilin.ludoka.model.UserService
 import io.ktor.server.application.*
 import io.ktor.util.logging.*
@@ -16,4 +17,5 @@ class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
     )
 
     val users = UserService(database, log)
+    val games = GameService(database, log)
 }

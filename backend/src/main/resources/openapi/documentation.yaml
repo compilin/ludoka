@@ -66,10 +66,6 @@ paths:
       responses:
         "200":
           description: "OK"
-          content:
-            'application/json':
-              schema:
-                type: "object"
   /auth/password:
     post:
       operationId: setPassword
@@ -83,16 +79,8 @@ paths:
       responses:
         "400":
           description: "Bad Request"
-          content:
-            'application/json':
-              schema:
-                type: "object"
         "200":
           description: "OK"
-          content:
-            'application/json':
-              schema:
-                type: "object"
   /auth/password/{id}:
     post:
       operationId: setUserPassword
@@ -112,22 +100,10 @@ paths:
       responses:
         "400":
           description: "Invalid password"
-          content:
-            'application/json':
-              schema:
-                type: "object"
         "200":
           description: "Password changed succesfully"
-          content:
-            'application/json':
-              schema:
-                type: "object"
         "404":
           description: "User not Found"
-          content:
-            'application/json':
-              schema:
-                type: "object"
     delete:
       operationId: unsetUserPassword
       summary: "Delete a user's password"
@@ -141,16 +117,8 @@ paths:
       responses:
         "200":
           description: "Password changed succesfully"
-          content:
-            'application/json':
-              schema:
-                type: "object"
         "404":
           description: "User not Found"
-          content:
-            'application/json':
-              schema:
-                type: "object"
   /users:
     get:
       operationId: getUserList
@@ -171,7 +139,7 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/UserData"
         required: true
       responses:
         "201":
@@ -202,10 +170,6 @@ paths:
                 $ref: "#/components/schemas/User"
         "404":
           description: "Not Found"
-          content:
-            'application/json':
-              schema:
-                type: "object"
     patch:
       operationId: updateUser
       summary: "Update user data"
@@ -219,15 +183,11 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/UserData"
         required: true
       responses:
         "200":
           description: "OK"
-          content:
-            'application/json':
-              schema:
-                type: "object"
     delete:
       operationId: deleteUser
       summary: "Delete user"
@@ -240,12 +200,95 @@ paths:
       responses:
         "200":
           description: "OK"
+  /games:
+    get:
+      operationId: getGameList
+      summary: "Get all games"
+      responses:
+        "200":
+          description: "OK"
           content:
             'application/json':
               schema:
-                type: "object"
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Game"
+    post:
+      operationId: createGame
+      summary: "Create game"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/GameData"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                type: "integer"
+                format: "int32"
+        "409":
+          description: "Game already exists with this name"
+  /games/{id}:
+    get:
+      operationId: getGame
+      summary: "Get game"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/Game"
+        "404":
+          description: "Not Found"
+    patch:
+      operationId: updateGame
+      summary: "Update game data"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/GameData"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      operationId: deleteGame
+      summary: "Delete game"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "OK"
 components:
   schemas:
+    UserData:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          required: true
     User:
       type: "object"
       properties:
@@ -267,3 +310,25 @@ components:
       properties:
         password:
           type: "string"
+    Game:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int32"
+          required: true
+        name:
+          type: "string"
+          required: true
+        steamid:
+          type: "string"
+          required: false
+    GameData:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          required: true
+        steamid:
+          type: "string"
+          required: false

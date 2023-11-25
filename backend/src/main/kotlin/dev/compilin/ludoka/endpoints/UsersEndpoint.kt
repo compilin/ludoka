@@ -21,7 +21,7 @@ private class Users {
 }
 
 
-fun Routing.configureUserEndpoint(db: AppDatabase) {
+fun Routing.configureUsersEndpoint(db: AppDatabase) {
     authenticate(AUTH_ADMIN) {
         // Create user
         post<Users> {

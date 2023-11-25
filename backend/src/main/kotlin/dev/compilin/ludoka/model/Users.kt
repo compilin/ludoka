@@ -13,7 +13,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @Serializable
 class User(val id: Int = -1, val name: String)
 
-class UserService(database: Database, log: Logger) {
+class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger) {
     object Users : IntIdTable() {
         val name = varchar("name", length = 50).uniqueIndex()
         val password = binary("password").nullable()
@@ -91,9 +91,9 @@ class UserService(database: Database, log: Logger) {
         Users.deleteWhere { Users.id.eq(id) } > 0
     }
 
-    suspend fun existsByName(name: String): Boolean {
+    suspend fun existsByName(name: String, exceptId: Int? = null): Boolean {
         return dbQuery {
-            Users.select { Users.name eq name }.count() > 0
+            Users.select { (Users.name eq name) and (Users.id neq exceptId) }.count() > 0
         }
     }
 }
