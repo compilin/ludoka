@@ -23,14 +23,15 @@ class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
     val games = GameService(database, log)
 }
 
-class DatabaseConflictException(@Suppress("Unused") val columns: List<String>) :
-    SQLException("Operation would violate unique constraint on columns: " + columns.joinToString())
+class DatabaseConflictException(indices: List<String>) :
+    SQLException("Value already in database for fields: " + indices.joinToString())
 
 
 interface IUniqueColumnsTable<T> {
     companion object {
         const val PRIMARY_KEY = "primary_key"
     }
+
     data class Entry<T>(val prop: Function<T, *>, val col: Column<*>, val selector: (T) -> Op<Boolean>)
 
     val table: Table
@@ -47,9 +48,11 @@ interface IUniqueColumnsTable<T> {
         val primaryKeySelector = primaryKeySelector(item)
         val primaryKeyUnselector = NotOp(primaryKeySelector)
 
-        val colsSelect = indexSelectors(item) + if (!update)
-            mapOf(PRIMARY_KEY to primaryKeySelector)
-        else
+        val colsSelect = indexSelectors(item) + if (!update) {
+            val name =
+                if (table.primaryKey!!.columns.size == 1) table.primaryKey!!.columns.first().name else PRIMARY_KEY
+            mapOf(name to primaryKeySelector)
+        } else
             emptyMap()
         if (colsSelect.isEmpty())
             return emptyList()
@@ -64,15 +67,18 @@ interface IUniqueColumnsTable<T> {
     }
 
     /**
-     * Same as [checkConflicts], but instead of returning conflicting columns, throws an exception if there is any
+     * Same as [checkConflicts], but instead of returning conflicting columns, returns a [Result]
      * @param item: object with the values to check for conflict
      * @param update: if true, exclude items matching the primary key of the given object, for update queries
-     * @throws DatabaseConflictException if there is a conflict on any column
+     * @param fn: function to run if there is no conflict
+     * @return a [Result] containing either the result of the transaction if successfully run, or a [DatabaseConflictException]
      */
-    fun checkConflictOrThrow(item: T, update: Boolean) {
+    fun <R> checkConflictAndRun(item: T, update: Boolean, fn: () -> R): Result<R> {
         val conflict = checkConflicts(item, update)
-        if (conflict.isNotEmpty())
-            throw DatabaseConflictException(conflict)
+        return if (conflict.isEmpty())
+            Result.success(fn())
+        else
+            Result.failure(DatabaseConflictException(conflict))
     }
 
 }
@@ -91,6 +97,7 @@ class UniqueColumnsTable<T>(
         fun <C> entry(col: Column<C>, prop: (T) -> C) {
             entryList.add(IUniqueColumnsTable.Entry(prop, col) { SqlExpressionBuilder.run { col eq prop(it) } })
         }
+
         fun <C : Comparable<C>> idEntry(col: Column<EntityID<C>>, prop: (T) -> C) {
             entryList.add(IUniqueColumnsTable.Entry(prop, col) { SqlExpressionBuilder.run { col eq prop(it) } })
         }
@@ -105,7 +112,11 @@ class UniqueColumnsTable<T>(
         }
         indexSelectors = { item: T ->
             table.indices.filter { it.unique }.associate { idx: Index ->
-                idx.indexName to AndOp(idx.columns.map { colMap[it]!!.selector(item) })
+                (if (idx.columns.size > 1) idx.indexName else idx.columns[0].name) to AndOp(idx.columns.map {
+                    colMap[it]!!.selector(
+                        item
+                    )
+                })
             }
         }
     }
