@@ -11,7 +11,6 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.plugins.forwardedheaders.*
 import io.ktor.server.plugins.openapi.*
-import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import org.slf4j.event.Level
@@ -43,7 +42,6 @@ fun Application.module() {
     }
     install(AutoHeadResponse)
     install(Resources)
-    install(StatusPages)
 
     routing {
         configureAuthEndpoint(db)
