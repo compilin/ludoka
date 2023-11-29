@@ -6,6 +6,7 @@ import dev.compilin.ludoka.UniqueColumnsTable
 import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -68,8 +69,15 @@ class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
     suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
-    suspend fun create(game: Game): Int = dbQuery {
-        Games.insertAndGetId(Games.write(game)).value
+    /**
+     * Creates a new game in database
+     * @param game: game to insert data from into database (id is ignored)
+     * @return a [Result<Int>] containing the ID of the game if successfully created, otherwise a [DatabaseConflictException]
+     */
+    suspend fun create(game: Game): Result<EntityID<Int>> = dbQuery {
+        Games.checkConflictAndRun(game, false) {
+            Games.insertAndGetId(Games.write(game))
+        }
     }
 
     /**
@@ -97,8 +105,10 @@ class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
         }
     }
 
-    suspend fun update(id: Int, game: Game): Boolean = dbQuery {
-        Games.update({ Games.id eq id }, body = Games.write(game)) > 0
+    suspend fun update(id: Int, game: Game): Result<Boolean> = dbQuery {
+        Games.checkConflictAndRun(game, true) {
+            Games.update({ Games.id eq id }, body = Games.write(game)) > 0
+        }
     }
 
     suspend fun delete(id: Int): Boolean = dbQuery {

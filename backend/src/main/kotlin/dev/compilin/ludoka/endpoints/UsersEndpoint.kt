@@ -26,19 +26,25 @@ fun Routing.configureUsersEndpoint(db: AppDatabase) {
         // Create user
         post<Users> {
             val user = call.receive<User>()
-            if (db.users.existsByName(user.name)) {
-                call.respond(HttpStatusCode.Conflict, "User already exists with this name")
-            } else {
-                val id = db.users.create(user, null)
-                call.respond(HttpStatusCode.Created, id)
+            db.users.create(user, null).onSuccess { id ->
+                call.respond(HttpStatusCode.Created, id.value)
+            }.onFailure {
+                call.respond(HttpStatusCode.Conflict, it.message!!)
             }
         }
 
         // Update user
         patch<Users.Id> {
             val user = call.receive<User>()
-            db.users.update(it.id, user)
-            call.respond(HttpStatusCode.OK)
+            db.users.update(it.id, user).onSuccess { updated ->
+                if (updated)
+                    call.respond(HttpStatusCode.OK)
+                else
+                    call.respond(HttpStatusCode.BadRequest, "User not found")
+            }.onFailure { ex ->
+                call.respond(HttpStatusCode.Conflict, ex.message!!)
+            }
+
         }
 
         // Delete user

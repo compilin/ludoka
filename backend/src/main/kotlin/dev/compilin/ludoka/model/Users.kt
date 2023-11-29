@@ -5,6 +5,7 @@ import dev.compilin.ludoka.UniqueColumnsTable
 import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -35,7 +36,8 @@ class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
 
         fun read(row: ResultRow) = User(
             row[id].value,
-            row[name])
+            row[name]
+        )
 
         fun <T> write(user: User): Users.(UpdateBuilder<T>) -> Unit = {
             it[name] = user.name
@@ -48,14 +50,16 @@ class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend () -> T): T =
+    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
-    suspend fun create(user: User, passHash: ByteArray?): Int = dbQuery {
-        Users.insertAndGetId {
-            write<Number>(user)(it)
-            it[password] = passHash
-        }.value
+    suspend fun create(user: User, passHash: ByteArray?): Result<EntityID<Int>> = dbQuery {
+        Users.checkConflictAndRun(user, false) {
+            Users.insertAndGetId {
+                write<Number>(user)(it)
+                it[password] = passHash
+            }
+        }
     }
 
     suspend fun read(id: Int): User? {
@@ -92,8 +96,10 @@ class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
         }
     }
 
-    suspend fun update(id: Int, user: User): Boolean = dbQuery {
-        Users.update({ Users.id eq id }, null, Users.write(user)) > 0
+    suspend fun update(id: Int, user: User): Result<Boolean> = dbQuery {
+        Users.checkConflictAndRun(user, true) {
+            Users.update({ Users.id eq id }, null, Users.write(user)) > 0
+        }
     }
 
     suspend fun updatePassword(id: Int, passHash: ByteArray?) = dbQuery {

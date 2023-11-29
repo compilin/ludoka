@@ -26,15 +26,24 @@ fun Routing.configureGamesEndpoint(db: AppDatabase) {
         // Create game
         post<Games> {
             val game = call.receive<Game>()
-            val id = db.games.create(game)
-            call.respond(HttpStatusCode.Created, id)
+            db.games.create(game).onSuccess {
+                call.respond(HttpStatusCode.Created, it.value)
+            }.onFailure { ex ->
+                call.respond(HttpStatusCode.Conflict, ex.message!!)
+            }
         }
 
         // Update game
         patch<Games.Id> {
             val game = call.receive<Game>()
-            db.games.update(it.id, game)
-            call.respond(HttpStatusCode.OK)
+            db.games.update(it.id, game).onSuccess { updated ->
+                if (updated)
+                    call.respond(HttpStatusCode.OK)
+                else
+                    call.respond(HttpStatusCode.BadRequest, "Game not found")
+            }.onFailure {
+                call.respond(HttpStatusCode.Conflict)
+            }
         }
 
         // Delete game
