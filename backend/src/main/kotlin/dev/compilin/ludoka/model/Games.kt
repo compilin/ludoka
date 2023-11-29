@@ -1,5 +1,8 @@
 package dev.compilin.ludoka.model
 
+import dev.compilin.ludoka.DatabaseConflictException
+import dev.compilin.ludoka.IUniqueColumnsTable
+import dev.compilin.ludoka.UniqueColumnsTable
 import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
@@ -15,9 +18,23 @@ import org.jetbrains.exposed.sql.transactions.transaction
 data class Game(val id: Int = -1, val name: String, val steamid: Int? = null)
 
 class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger) {
-    object Games : IntIdTable() {
+    object Games : IntIdTable(), IUniqueColumnsTable<Game> {
         val name = varchar("name", 256)
         val steamid = integer("steamid").nullable().uniqueIndex()
+
+        override val table: Table = this
+        override val primaryKeySelector: (Game) -> Op<Boolean>
+        override val indexSelectors: (Game) -> Map<String, Op<Boolean>>
+
+        init {
+            val uniqueColumns = UniqueColumnsTable(this) {
+                idEntry(id, Game::id)
+                entry(name, Game::name)
+            }
+            primaryKeySelector = uniqueColumns.primaryKeySelector
+            indexSelectors = uniqueColumns.indexSelectors
+        }
+
 
         fun read(row: ResultRow): Game = Game(
             row[id].value,
@@ -29,6 +46,17 @@ class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
             it[name] = game.name
             it[steamid] = game.steamid
         }
+
+        /**
+         * Generates a select query to check for record rows that would cause a unique constraint violation error on
+         * insert or update
+         * @param game: game with properties to check for duplicates
+         * @return a list of conflicting games
+         */
+        fun SqlExpressionBuilder.findConflict(game: Game): Op<Boolean> =
+            (id neq game.id) and (steamid eq game.steamid)
+
+
     }
 
     init {
@@ -37,13 +65,17 @@ class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend () -> T): T =
+    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
     suspend fun create(game: Game): Int = dbQuery {
-        Games.insert(Games.write(game))[Games.id].value
+        Games.insertAndGetId(Games.write(game)).value
     }
 
+    /**
+     * Finds and returns a game by its ID
+     * @throws DatabaseConflictException
+     */
     suspend fun read(id: Int): Game? {
         return dbQuery {
             Games.select { Games.id eq id }

@@ -11,4 +11,5 @@
     <logger name="io.netty" level="INFO"/>
     <logger name="io.swagger.codegen" level="INFO"/>
     <logger name="com.github.jknack.handlebars" level="INFO"/>
+    <logger name="Exposed" level="DEBUG"/>
 </configuration>

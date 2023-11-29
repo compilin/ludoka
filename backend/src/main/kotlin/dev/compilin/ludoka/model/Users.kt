@@ -1,5 +1,7 @@
 package dev.compilin.ludoka.model
 
+import dev.compilin.ludoka.IUniqueColumnsTable
+import dev.compilin.ludoka.UniqueColumnsTable
 import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
@@ -14,9 +16,22 @@ import org.jetbrains.exposed.sql.transactions.transaction
 class User(val id: Int = -1, val name: String)
 
 class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger) {
-    object Users : IntIdTable() {
+    object Users : IntIdTable(), IUniqueColumnsTable<User> {
         val name = varchar("name", length = 50).uniqueIndex()
         val password = binary("password").nullable()
+
+        override val table: Table = this
+        override val primaryKeySelector: (User) -> Op<Boolean>
+        override val indexSelectors: (User) -> Map<String, Op<Boolean>>
+
+        init {
+            val uniqueColumns = UniqueColumnsTable(this) {
+                idEntry(id, User::id)
+                entry(name, User::name)
+            }
+            primaryKeySelector = uniqueColumns.primaryKeySelector
+            indexSelectors = uniqueColumns.indexSelectors
+        }
 
         fun read(row: ResultRow) = User(
             row[id].value,
@@ -37,10 +52,10 @@ class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
     suspend fun create(user: User, passHash: ByteArray?): Int = dbQuery {
-        Users.insert {
+        Users.insertAndGetId {
             write<Number>(user)(it)
             it[password] = passHash
-        }[Users.id].value
+        }.value
     }
 
     suspend fun read(id: Int): User? {
