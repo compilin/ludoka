@@ -65,7 +65,7 @@ fun Routing.configureGamesEndpoint(db: AppDatabase) {
             if (game != null) {
                 call.respond(HttpStatusCode.OK, game)
             } else {
-                call.respond(HttpStatusCode.NotFound)
+                call.respond(HttpStatusCode.BadRequest)
             }
         }
     }

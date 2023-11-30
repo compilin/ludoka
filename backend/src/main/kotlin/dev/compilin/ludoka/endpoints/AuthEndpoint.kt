@@ -99,7 +99,7 @@ fun Routing.configureAuthEndpoint(db: AppDatabase) {
                 if (db.users.updatePassword(it.id, hashPass))
                     call.respond(HttpStatusCode.OK)
                 else
-                    call.respond(HttpStatusCode.NotFound)
+                    call.respond(HttpStatusCode.BadRequest)
             }
         }
 
@@ -108,7 +108,7 @@ fun Routing.configureAuthEndpoint(db: AppDatabase) {
             if (db.users.updatePassword(it.id, null))
                 call.respond(HttpStatusCode.OK)
             else
-                call.respond(HttpStatusCode.NotFound)
+                call.respond(HttpStatusCode.BadRequest)
         }
     }
 }

@@ -65,7 +65,7 @@ fun Routing.configureUsersEndpoint(db: AppDatabase) {
             if (user != null) {
                 call.respond(HttpStatusCode.OK, user)
             } else {
-                call.respond(HttpStatusCode.NotFound)
+                call.respond(HttpStatusCode.BadRequest)
             }
         }
     }

@@ -99,11 +99,9 @@ paths:
         required: true
       responses:
         "400":
-          description: "Invalid password"
+          description: "Invalid password or user not found"
         "200":
           description: "Password changed succesfully"
-        "404":
-          description: "User not Found"
     delete:
       operationId: unsetUserPassword
       summary: "Delete a user's password"
@@ -117,7 +115,7 @@ paths:
       responses:
         "200":
           description: "Password changed succesfully"
-        "404":
+        "400":
           description: "User not Found"
   /users:
     get:
@@ -168,7 +166,7 @@ paths:
             'application/json':
               schema:
                 $ref: "#/components/schemas/User"
-        "404":
+        "400":
           description: "Not Found"
     patch:
       operationId: updateUser
@@ -188,6 +186,10 @@ paths:
       responses:
         "200":
           description: "OK"
+        "400":
+          description: "No user found with this ID"
+        "409":
+          description: "Different user exists with this name"
     delete:
       operationId: deleteUser
       summary: "Delete user"
@@ -249,7 +251,7 @@ paths:
             'application/json':
               schema:
                 $ref: "#/components/schemas/Game"
-        "404":
+        "400":
           description: "Not Found"
     patch:
       operationId: updateGame
@@ -269,6 +271,10 @@ paths:
       responses:
         "200":
           description: "OK"
+        "400":
+          description: "Game not found"
+        "409":
+          description: "Different game exists with this steamid"
     delete:
       operationId: deleteGame
       summary: "Delete game"
