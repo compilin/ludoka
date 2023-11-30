@@ -4,7 +4,7 @@ info:
   description: "backend API"
   version: "0.1.0"
 servers:
-  - url: "https://backend"
+  - url: "https://backend/api"
 paths:
   /auth:
     summary: "Manages user authentication and passwords"

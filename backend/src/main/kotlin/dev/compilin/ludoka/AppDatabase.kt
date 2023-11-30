@@ -2,6 +2,7 @@ package dev.compilin.ludoka
 
 import dev.compilin.ludoka.model.GameService
 import dev.compilin.ludoka.model.UserService
+import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,8 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import java.sql.SQLException
 import java.util.function.Function
 
+@Resource("/api")
+class ApiBase
 
 class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
 

@@ -2,6 +2,7 @@ package dev.compilin.ludoka.endpoints
 
 import dev.compilin.ludoka.AUTH_ADMIN
 import dev.compilin.ludoka.AUTH_SESSION
+import dev.compilin.ludoka.ApiBase
 import dev.compilin.ludoka.AppDatabase
 import dev.compilin.ludoka.model.Game
 import io.ktor.http.*
@@ -15,7 +16,7 @@ import io.ktor.server.routing.Routing
 
 @Suppress("unused")
 @Resource("/games")
-private class Games {
+private data class Games(val parent: ApiBase) {
     @Resource("{id}")
     class Id(val parent: Games, val id: Int)
 }

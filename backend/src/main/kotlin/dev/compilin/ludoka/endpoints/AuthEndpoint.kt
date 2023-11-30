@@ -15,7 +15,7 @@ import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable
 
 @Resource("auth")
-internal class Auth {
+private data class Auth(val parent: ApiBase) {
     @Resource("password")
     data class Password(val parent: Auth) {
         @Resource("{id}")
