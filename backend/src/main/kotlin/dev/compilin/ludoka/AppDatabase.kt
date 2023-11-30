@@ -4,8 +4,10 @@ import dev.compilin.ludoka.model.GameService
 import dev.compilin.ludoka.model.UserService
 import io.ktor.server.application.*
 import io.ktor.util.logging.*
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.sql.SQLException
 import java.util.function.Function
 
@@ -22,6 +24,10 @@ class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
     val users = UserService(database, log)
     val games = GameService(database, log)
 }
+
+
+suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
+    newSuspendedTransaction(Dispatchers.IO) { block() }
 
 class DatabaseConflictException(indices: List<String>) :
     SQLException("Value already in database for fields: " + indices.joinToString())

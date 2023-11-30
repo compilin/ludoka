@@ -2,15 +2,14 @@ package dev.compilin.ludoka.model
 
 import dev.compilin.ludoka.IUniqueColumnsTable
 import dev.compilin.ludoka.UniqueColumnsTable
+import dev.compilin.ludoka.dbQuery
 import io.ktor.util.logging.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @Serializable
@@ -49,9 +48,6 @@ class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger)
             SchemaUtils.create(Users)
         }
     }
-
-    suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
 
     suspend fun create(user: User, passHash: ByteArray?): Result<EntityID<Int>> = dbQuery {
         Users.checkConflictAndRun(user, false) {
