@@ -5,5 +5,6 @@ ludoka {
     user = "root"
     password = ""
   }
+  admin_token = null // CHANGEME
   reverse_proxy = false // Enables parsing of Forwarding-related headers
 }
