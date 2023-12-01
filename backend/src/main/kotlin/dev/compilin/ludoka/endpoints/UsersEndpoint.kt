@@ -1,9 +1,6 @@
 package dev.compilin.ludoka.endpoints
 
-import dev.compilin.ludoka.AUTH_ADMIN
-import dev.compilin.ludoka.AUTH_SESSION
-import dev.compilin.ludoka.ApiBase
-import dev.compilin.ludoka.AppDatabase
+import dev.compilin.ludoka.*
 import dev.compilin.ludoka.model.User
 import io.ktor.http.*
 import io.ktor.resources.*
@@ -30,7 +27,7 @@ fun Routing.configureUsersEndpoint(db: AppDatabase) {
             db.users.create(user, null).onSuccess { id ->
                 call.respond(HttpStatusCode.Created, id.value)
             }.onFailure {
-                call.respond(HttpStatusCode.Conflict, it.message!!)
+                call.respond(HttpStatusCode.Conflict, Message(it.message!!))
             }
         }
 
@@ -41,9 +38,9 @@ fun Routing.configureUsersEndpoint(db: AppDatabase) {
                 if (updated)
                     call.respond(HttpStatusCode.OK)
                 else
-                    call.respond(HttpStatusCode.BadRequest, "User not found")
+                    call.respond(HttpStatusCode.BadRequest)
             }.onFailure { ex ->
-                call.respond(HttpStatusCode.Conflict, ex.message!!)
+                call.respond(HttpStatusCode.Conflict)
             }
 
         }

@@ -38,7 +38,7 @@ fun Routing.configureLibrariesEndpoint(db: AppDatabase) {
 
         post<Library.Entry> {
             if (call.principal<UserPrincipal>()?.user?.id?.equals(it.uid) == false) {
-                call.respond(HttpStatusCode.Unauthorized, Message("You cannot edit another user's library"))
+                call.respond(HttpStatusCode.Unauthorized)
             } else {
                 val entry = call.receive<LibraryEntry>()
                 db.libraries.set(it.uid, it.gid, entry)
@@ -68,7 +68,7 @@ fun Routing.configureLibrariesEndpoint(db: AppDatabase) {
                     )
                 )
             } catch (ex: NumberFormatException) {
-                call.respond(HttpStatusCode.BadRequest, "Invalid IDs list")
+                call.respond(HttpStatusCode.BadRequest)
             }
         }
     }

@@ -24,7 +24,7 @@ paths:
       description: "Status code indicates the result of the operation while the subsequent auth status is returned in all cases"
       requestBody:
         content:
-          '*/*':
+          'application/json':
             schema:
               type: "object"
               properties:
@@ -287,24 +287,124 @@ paths:
       responses:
         "200":
           description: "OK"
+  /library:
+    get:
+      operationId: getGroupLibraryEntries
+      summary: "Get the a group of users's library entries"
+      description: "Will return an array of entries in compact form, i.e in an array of arrays, with each of the inner arrays holding the values for the different columns of the LibraryEntry object, respectively to the columns property. Default values for entries is also given, and entries equal to those are omitted from the main data."
+      parameters:
+        - name: "users"
+          description: "comma-separated list of user IDs"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+        - name: "games"
+          description: "comma-separated list of game IDs. If left out, will return all games owned by those users"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupEntries"
+              examples:
+                Example#1:
+                  description: "Library entries of users 1 and 3 for games 2 and 4"
+                  value:
+                    defaults:
+                      user_id: -1
+                      game_id: -1
+                      interest: false
+                    columns:
+                      - "user_id"
+                      - "game_id"
+                      - "interest"
+                    entries:
+                      - [ 1, 2, true ]
+                      - [ 1, 4, true ]
+                      - [ 2, 4, true ]
+        "400":
+          description: "Couldn't part user and/or game IDs"
+  /library/{userid}/{gameid}:
+    get:
+      operationId: getLibraryEntry
+      summary: "Gets the library entry for a given user and game"
+      parameters:
+        - name: "userid"
+          description: "Id of the user"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+        - name: "gid"
+          description: "Id of the game"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/LibraryEntry"
+    post:
+      operationId: setLibraryEntry
+      summary: "Sets the library entry data for a given user and game"
+      description: "Requires to be logged in as the given user, or to have admin access"
+      parameters:
+        - name: "userid"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+        - name: "gameid"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/LibraryEntry"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+        "200":
+          description: "OK"
+    delete:
+      operationId: resetLibraryEntry
+      summary: "Resets a library entry for a given user and game"
+      parameters:
+        - name: "uid"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+        - name: "gid"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+      responses:
+        "401":
+          description: "Unauthorized"
+        "200":
+          description: "OK. Returns the default values for reference"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/LibraryEntry"
 components:
   schemas:
-    UserData:
-      type: "object"
-      properties:
-        name:
-          type: "string"
-          required: true
-    User:
-      type: "object"
-      properties:
-        id:
-          type: "integer"
-          format: "int32"
-          required: true
-        name:
-          type: "string"
-          required: true
     AuthStatus:
       description: "An optional User object to indicate authentication status"
       type: "object"
@@ -316,7 +416,26 @@ components:
       properties:
         password:
           type: "string"
+    UserData:
+      description: "Data about a user, without their ID"
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          required: true
+    User:
+      description: "Data about a user"
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int32"
+          required: true
+        name:
+          type: "string"
+          required: true
     Game:
+      description: "Data about a game"
       type: "object"
       properties:
         id:
@@ -330,6 +449,7 @@ components:
           type: "string"
           required: false
     GameData:
+      description: "Data about a game, without its ID"
       type: "object"
       properties:
         name:
@@ -338,3 +458,40 @@ components:
         steamid:
           type: "string"
           required: false
+    LibraryEntry:
+      description: "Relation between a user and a game in the app"
+      type: "object"
+      properties:
+        user_id:
+          type: "integer"
+          format: "int32"
+        game_id:
+          type: "integer"
+          format: "int32"
+        interest:
+          type: "boolean"
+    LibraryEntryData:
+      description: "Relation between a user and a game in the app, without the associated IDs"
+      type: "object"
+      properties:
+        interest:
+          type: "boolean"
+    GroupEntries:
+      type: "object"
+      properties:
+        defaults:
+          $ref: "#/components/schemas/LibraryEntry"
+        columns:
+          type: "array"
+          items:
+            type: "string"
+        entries:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/LibraryEntry"
+    Message:
+      description: "A message encapsulated in a JSON object"
+      type: "object"
+      properties:
+        msg:
+          type: "string"

@@ -1,9 +1,6 @@
 package dev.compilin.ludoka.endpoints
 
-import dev.compilin.ludoka.AUTH_ADMIN
-import dev.compilin.ludoka.AUTH_SESSION
-import dev.compilin.ludoka.ApiBase
-import dev.compilin.ludoka.AppDatabase
+import dev.compilin.ludoka.*
 import dev.compilin.ludoka.model.Game
 import io.ktor.http.*
 import io.ktor.resources.*
@@ -30,7 +27,7 @@ fun Routing.configureGamesEndpoint(db: AppDatabase) {
             db.games.create(game).onSuccess {
                 call.respond(HttpStatusCode.Created, it.value)
             }.onFailure { ex ->
-                call.respond(HttpStatusCode.Conflict, ex.message!!)
+                call.respond(HttpStatusCode.Conflict, Message(ex.message!!))
             }
         }
 
@@ -41,7 +38,7 @@ fun Routing.configureGamesEndpoint(db: AppDatabase) {
                 if (updated)
                     call.respond(HttpStatusCode.OK)
                 else
-                    call.respond(HttpStatusCode.BadRequest, "Game not found")
+                    call.respond(HttpStatusCode.BadRequest)
             }.onFailure {
                 call.respond(HttpStatusCode.Conflict)
             }
