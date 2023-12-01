@@ -1,10 +1,10 @@
 package dev.compilin.ludoka
 
 import dev.compilin.ludoka.model.GameService
+import dev.compilin.ludoka.model.LibrariesService
 import dev.compilin.ludoka.model.UserService
 import io.ktor.resources.*
 import io.ktor.server.application.*
-import io.ktor.util.logging.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
@@ -15,7 +15,7 @@ import java.util.function.Function
 @Resource("/api")
 class ApiBase
 
-class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
+class AppDatabase(environment: ApplicationEnvironment) {
 
     val database = Database.connect(
         driver = environment.config.property("ludoka.db.driver").getString(),
@@ -24,8 +24,9 @@ class AppDatabase(environment: ApplicationEnvironment, log: Logger) {
         password = environment.config.property("ludoka.db.password").getString()
     )
 
-    val users = UserService(database, log)
-    val games = GameService(database, log)
+    val users = UserService(database)
+    val games = GameService(database)
+    val libraries = LibrariesService(database)
 }
 
 

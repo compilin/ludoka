@@ -4,7 +4,6 @@ import dev.compilin.ludoka.DatabaseConflictException
 import dev.compilin.ludoka.IUniqueColumnsTable
 import dev.compilin.ludoka.UniqueColumnsTable
 import dev.compilin.ludoka.dbQuery
-import io.ktor.util.logging.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
@@ -17,7 +16,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @Serializable
 data class Game(val id: Int = -1, val name: String, val steamid: Int? = null)
 
-class GameService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger) {
+class GameService(database: Database) {
     object Games : IntIdTable(), IUniqueColumnsTable<Game> {
         val name = varchar("name", 256)
         val steamid = integer("steamid").nullable().uniqueIndex()

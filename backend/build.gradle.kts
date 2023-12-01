@@ -44,6 +44,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.ktor:ktor-server-status-pages-jvm:2.3.6")
 
     runtimeOnly("org.postgresql:postgresql:42.6.0")
 

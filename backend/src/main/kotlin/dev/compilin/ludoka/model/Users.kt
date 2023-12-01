@@ -3,7 +3,6 @@ package dev.compilin.ludoka.model
 import dev.compilin.ludoka.IUniqueColumnsTable
 import dev.compilin.ludoka.UniqueColumnsTable
 import dev.compilin.ludoka.dbQuery
-import io.ktor.util.logging.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
@@ -15,7 +14,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @Serializable
 class User(val id: Int = -1, val name: String)
 
-class UserService(database: Database, @Suppress("UNUSED_PARAMETER") log: Logger) {
+class UserService(database: Database) {
     object Users : IntIdTable(), IUniqueColumnsTable<User> {
         val name = varchar("name", length = 50).uniqueIndex()
         val password = binary("password").nullable()

@@ -85,7 +85,7 @@ class DatabaseTest {
                 config = ConfigLoader.load()
                 developmentMode = true
             })
-            appdb = AppDatabase(app.environment, log)
+            appdb = AppDatabase(app.environment)
 
             transaction(appdb.database) {
                 log.info("Creating table ${TestTable.tableName}…")
